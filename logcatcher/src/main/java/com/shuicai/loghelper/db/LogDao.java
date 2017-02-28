@@ -1,7 +1,15 @@
 package com.shuicai.loghelper.db;
 
+import android.app.ListActivity;
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+
+import com.shuicai.loghelper.db.bean.NormalLogInfo;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by zhuruqiao on 2017/2/27.
@@ -20,11 +28,29 @@ public class LogDao {
     }
 
     /**
-     * 插入普通日志
+     * 插入日志
      *
-     * @param content
+     * @param content 日志内容
+     * @return true if success
      */
-    public void insertNormalLog(String content) {
+    public static boolean insertNormalLog(String content, Context context) {
+
+        SQLiteDatabase writableDB = getWritableDB(context);
+
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DBSQLManager.LogTable.Column.TIME.name, "");
+        contentValues.put(DBSQLManager.LogTable.Column.TYPE.name, "");
+        contentValues.put(DBSQLManager.LogTable.Column.CONTENT.name, content);
+        long insert = writableDB.insert(DBSQLManager.LogTable.TABLE_NAME, null, contentValues);
+
+        writableDB.close();
+
+        if (insert != -1) {
+            return true;
+        } else {
+            return false;
+        }
+
 
     }
 
@@ -42,7 +68,25 @@ public class LogDao {
      *
      * @param content
      */
-    public void queryNormalLog(String content) {
+    public List<NormalLogInfo> queryNormalLog( Context context, int count) {
+        SQLiteDatabase writableDB = getWritableDB(context);
+        Cursor query = writableDB.query(DBSQLManager.LogTable.TABLE_NAME, null, null, null, null, null, null, "LIMIT " + count);
+        if (query!=null&&query.getCount()!=0){
+            ArrayList<NormalLogInfo> normalLogInfos = new ArrayList<>();
+            while (query.moveToNext()){
+                NormalLogInfo normalLogInfo = new NormalLogInfo();
+                normalLogInfo.id = query.getInt(DBSQLManager.LogTable.Column.ID.index);
+                normalLogInfo.time = query.getLong(DBSQLManager.LogTable.Column.TIME.index);
+                normalLogInfo.type = query.getString(DBSQLManager.LogTable.Column.TYPE.index);
+                normalLogInfo.content = query.getString(DBSQLManager.LogTable.Column.CONTENT.index);
+                normalLogInfos.add(normalLogInfo);
+            }
+            query.close();
+            writableDB.close();
+            return normalLogInfos;
+        }else {
+            return null;
+        }
 
     }
 
