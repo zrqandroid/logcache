@@ -1,13 +1,15 @@
 package com.shuicai.loghelper.log;
 
-import com.shuicai.loghelper.utils.StorageFactory;
+import android.content.Context;
+
+import com.shuicai.loghelper.db.LogDao;
+import com.shuicai.loghelper.db.bean.NormalLogInfo;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * log日志统计保存
@@ -21,23 +23,27 @@ public class LogCatcher {
     private LogDumper mLogDumper = null;
     private int mPId;
     private static final int BUFFER_SIZE = 1024;
+    private Context mContext;
 
 
-    public static LogCatcher getInstance() {
+    public static LogCatcher getInstance(Context context) {
         if (instance == null) {
-            instance = new LogCatcher();
+            instance = new LogCatcher(context);
         }
         return instance;
     }
 
-    private LogCatcher() {
+    private LogCatcher(Context context) {
+        mContext = context;
         mPId = android.os.Process.myPid();
     }
 
     public void start(LogType type) {
         if (mLogDumper == null)
-            mLogDumper = new LogDumper(String.valueOf(mPId), type, StorageFactory.getFilePath(StorageFactory.TYPE_LOG));
-        mLogDumper.start();
+            mLogDumper = new LogDumper(String.valueOf(mPId), type);
+        if (!mLogDumper.isAlive()) {
+            mLogDumper.start();
+        }
     }
 
     public void stop() {
@@ -54,16 +60,9 @@ public class LogCatcher {
         private boolean mRunning = true;
         String cmds;
         private String mPID;
-        private FileOutputStream os;
 
-        public LogDumper(String pid, LogType type, String path) {
+        public LogDumper(String pid, LogType type) {
             mPID = pid;
-            try {
-                os = new FileOutputStream(new File(path));
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-
 
             /**
              *
@@ -99,8 +98,8 @@ public class LogCatcher {
                     if (line.length() == 0) {
                         continue;
                     }
-                    if (os != null && line.contains(mPID)) {
-                        os.write((line + "\n").getBytes());
+                    if (line.contains(mPID)) {
+                        LogDao.insertNormalLog(getNormalLogInfo(line), mContext);
                     }
                 }
 
@@ -119,19 +118,51 @@ public class LogCatcher {
                         e.printStackTrace();
                     }
                 }
-                if (os != null) {
-                    try {
-                        os.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    os = null;
-                }
 
             }
 
         }
 
+    }
+
+    /**
+     * 封装日志到对象中
+     *
+     * @param line
+     * @return
+     */
+    private NormalLogInfo getNormalLogInfo(String line) {
+        NormalLogInfo normalLogInfo = new NormalLogInfo();
+        normalLogInfo.content = line;
+        normalLogInfo.time = getTimeFromLog(line);
+        return normalLogInfo;
+    }
+
+    /**
+     * 从日志中截取时间
+     *
+     * @param log
+     * @return
+     */
+    public static String getTimeFromLog(String log) {
+        try {
+            String[] split = log.split(" ");
+            return split[0] + " " + split[1];
+        } catch (Exception e) {
+            //如果解析时间失败 获取本地时间作为日志时间
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM-dd HH:mm:ss.SS");
+            return simpleDateFormat.format(new Date());
+        }
+
+//获取毫秒值
+//        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM-dd HH:mm:ss.SS");
+//        try {
+//            Date parse = simpleDateFormat.parse(split[0] + " " + split[1]);
+//            return parse.getTime();
+//        } catch (ParseException e) {
+//            e.printStackTrace();
+//            return System.currentTimeMillis();
+//        }
     }
 
 }  

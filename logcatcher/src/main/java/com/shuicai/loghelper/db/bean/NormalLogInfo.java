@@ -8,7 +8,7 @@ public class NormalLogInfo {
 
     public int id;
 
-    public long time;
+    public String time;
 
     public String content;
 

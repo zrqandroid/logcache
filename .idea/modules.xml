@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/CrashCatch.iml" filepath="$PROJECT_DIR$/CrashCatch.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/logcache.iml" filepath="$PROJECT_DIR$/logcache.iml" />
       <module fileurl="file://$PROJECT_DIR$/logcatcher/logcatcher.iml" filepath="$PROJECT_DIR$/logcatcher/logcatcher.iml" />
     </modules>
   </component>
